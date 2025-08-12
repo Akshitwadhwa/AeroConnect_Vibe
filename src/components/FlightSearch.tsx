@@ -1,39 +1,59 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Loader2 } from "lucide-react";
 
 interface FlightSearchProps {
-  onSearch: (flightNumber: string) => void;
+  onSearch: (iata: string, type: "departure" | "arrival") => void;
   isLoading: boolean;
 }
 
 const FlightSearch = ({ onSearch, isLoading }: FlightSearchProps) => {
-  const [flightNumber, setFlightNumber] = useState("");
+  const [iata, setIata] = useState("");
+  const [type, setType] = useState<"departure" | "arrival">("departure");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (flightNumber.trim()) {
-      onSearch(flightNumber.trim());
+    if (iata.trim()) {
+      onSearch(iata.trim(), type);
     }
   };
 
   return (
-    <Card className="max-w-lg mx-auto">
+    <Card className="max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Track a Flight</CardTitle>
-        <CardDescription>Enter a flight number to see its live status.</CardDescription>
+        <CardTitle>Airport Flight Schedule</CardTitle>
+        <CardDescription>
+          Enter an Airport IATA code to see its live schedule.
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <Tabs
+          value={type}
+          onValueChange={(value) => setType(value as "departure" | "arrival")}
+        >
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="departure">Departures</TabsTrigger>
+            <TabsTrigger value="arrival">Arrivals</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <form onSubmit={handleSubmit} className="flex gap-2 mt-4">
           <Input
             type="text"
-            placeholder="e.g., UA423"
-            value={flightNumber}
-            onChange={(e) => setFlightNumber(e.target.value)}
+            placeholder="e.g., JFK, LHR, HND"
+            value={iata}
+            onChange={(e) => e.target.value.length <= 3 && setIata(e.target.value.toUpperCase())}
             className="flex-grow"
             disabled={isLoading}
+            maxLength={3}
           />
           <Button type="submit" disabled={isLoading}>
             {isLoading ? (
@@ -41,7 +61,7 @@ const FlightSearch = ({ onSearch, isLoading }: FlightSearchProps) => {
             ) : (
               <Search className="h-4 w-4 mr-2" />
             )}
-            Track
+            Search
           </Button>
         </form>
       </CardContent>
