@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   User,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
   signOut,
@@ -15,7 +14,6 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
@@ -39,10 +37,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
+    const unsubscribe = onAuthStateChanged(
+      auth, 
+      (user) => {
+        console.log('Auth state changed:', user ? 'User logged in' : 'User logged out');
+        setUser(user);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Auth state change error:', error);
+        setError('Authentication error occurred');
+        setLoading(false);
+      }
+    );
 
     return unsubscribe;
   }, []);
@@ -64,18 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const register = async (email: string, password: string) => {
-    try {
-      setError(null);
-      setLoading(true);
-      await createUserWithEmailAndPassword(auth, email, password);
-    } catch (error: any) {
-      setError(getErrorMessage(error.code));
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const loginWithGoogle = async () => {
     try {
@@ -107,10 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return 'No account found with this email address.';
       case 'auth/wrong-password':
         return 'Incorrect password.';
-      case 'auth/email-already-in-use':
-        return 'An account with this email already exists.';
-      case 'auth/weak-password':
-        return 'Password should be at least 6 characters.';
+
       case 'auth/invalid-email':
         return 'Invalid email address.';
       case 'auth/too-many-requests':
@@ -129,11 +122,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     loading,
     error,
     login,
-    register,
     loginWithGoogle,
     logout,
     clearError,
   };
+
+  // Show loading screen while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-gray-100 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

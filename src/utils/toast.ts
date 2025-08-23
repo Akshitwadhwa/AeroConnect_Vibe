@@ -4,7 +4,7 @@ export const showSuccess = (message: string) => {
   toast.success(message);
 };
 
-export const showError = (message: string) => {
+export const showError = (message: string, message: any) => {
   toast.error(message);
 };
 

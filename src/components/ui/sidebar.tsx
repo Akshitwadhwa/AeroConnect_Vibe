@@ -1,8 +1,10 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { VariantProps, cva } from "class-variance-authority";
-import { PanelLeft } from "lucide-react";
-
+import { PanelLeft, LogOut } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { showSuccess, showError } from '@/utils/toast';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -741,6 +743,51 @@ const SidebarMenuSubButton = React.forwardRef<
 });
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton";
 
+const SidebarLogoutButton = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentProps<"button"> & {
+    variant?: "default" | "outline";
+    size?: "default" | "sm" | "lg";
+  }
+>(({ className, variant = "default", size = "default", ...props }, ref) => {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      showSuccess("Logged out successfully");
+      navigate("/login");
+    } catch (error) {
+      showError("Failed to logout. Please try again.");
+      console.error("Logout error:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  return (
+    <Button
+      ref={ref}
+      variant={variant === "outline" ? "outline" : "ghost"}
+      size={size === "sm" ? "sm" : size === "lg" ? "lg" : "default"}
+      className={cn(
+        "w-full justify-start gap-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        className,
+      )}
+      onClick={handleLogout}
+      disabled={isLoggingOut}
+      {...props}
+    >
+      <LogOut className="h-4 w-4" />
+      {isLoggingOut ? "Logging out..." : "Logout"}
+    </Button>
+  );
+});
+SidebarLogoutButton.displayName = "SidebarLogoutButton";
+
 export {
   Sidebar,
   SidebarContent,
@@ -752,6 +799,7 @@ export {
   SidebarHeader,
   SidebarInput,
   SidebarInset,
+  SidebarLogoutButton,
   SidebarMenu,
   SidebarMenuAction,
   SidebarMenuBadge,
